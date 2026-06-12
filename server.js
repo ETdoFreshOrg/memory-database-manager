@@ -50,7 +50,10 @@ const services = {
 };
 
 const app = express();
-app.use(express.json());
+// NOTE: do NOT apply express.json() globally — it drains the request body
+// stream, which breaks the proxy routes below that `req.pipe(proxy)` the raw
+// body to the backend (the body would be gone, the request would hang forever).
+// Only /auth/login needs a parsed body, so json() is scoped to that route.
 
 // ── Auth helpers ──────────────────────────────────────────
 function isValidAuth(req) {
@@ -78,7 +81,7 @@ app.get('/auth/status', (_req, res) => {
 });
 
 // Login endpoint
-app.post('/auth/login', (req, res) => {
+app.post('/auth/login', express.json(), (req, res) => {
   if (!UI_PASSWORD) return res.json({ ok: true }); // no password needed
   const { password } = req.body || {};
   if (password !== UI_PASSWORD) return res.status(401).json({ ok: false, error: 'Invalid password' });
