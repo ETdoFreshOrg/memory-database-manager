@@ -14,27 +14,6 @@ export function fileUrl(recordId: string): string {
   return `/api/attachments/${recordId}/file`;
 }
 
-// Service-specific API helpers
-export function discordApi<T = any>(path: string, init?: RequestInit): Promise<T> {
-  return apiFetch<T>(`/proxy/discord-ingestor${path}`, init);
-}
-
-export function gmailApi<T = any>(path: string, init?: RequestInit): Promise<T> {
-  return apiFetch<T>(`/proxy/gmail-ingestor${path}`, init);
-}
-
-export function slackApi<T = any>(path: string, init?: RequestInit): Promise<T> {
-  return apiFetch<T>(`/proxy/slack-ingestor${path}`, init);
-}
-
-export function chatgptApi<T = any>(path: string, init?: RequestInit): Promise<T> {
-  return apiFetch<T>(`/proxy/chatgpt-ingestor${path}`, init);
-}
-
-export function openclawApi<T = any>(path: string, init?: RequestInit): Promise<T> {
-  return apiFetch<T>(`/proxy/openclaw-ingestor${path}`, init);
-}
-
 // Subscription API helpers
 export function getSubscriptions(service?: string): Promise<{ subscriptions: Array<Record<string, unknown>> }> {
   const path = service ? `/api/subscriptions/${service}` : '/api/subscriptions';

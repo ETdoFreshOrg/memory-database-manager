@@ -19,34 +19,6 @@ const services = {
     url: (process.env.MEMORY_API_URL || 'http://dokploy-memory-database-api-lxfp0i:3000').replace(/\/$/, ''),
     token: process.env.MEMORY_API_TOKEN || '',
   },
-  'discord-ingestor': {
-    url: (process.env.DISCORD_INGESTOR_URL || '').replace(/\/$/, ''),
-    token: process.env.DISCORD_INGESTOR_TOKEN || '',
-  },
-  'gmail-ingestor': {
-    url: (process.env.GMAIL_INGESTOR_URL || '').replace(/\/$/, ''),
-    token: process.env.GMAIL_INGESTOR_TOKEN || '',
-  },
-  'slack-ingestor': {
-    url: (process.env.SLACK_INGESTOR_URL || '').replace(/\/$/, ''),
-    token: process.env.SLACK_INGESTOR_TOKEN || '',
-  },
-  'anthropic-ingestor': {
-    url: (process.env.ANTHROPIC_INGESTOR_URL || '').replace(/\/$/, ''),
-    token: process.env.ANTHROPIC_INGESTOR_TOKEN || '',
-  },
-  'chatgpt-ingestor': {
-    url: (process.env.CHATGPT_INGESTOR_URL || '').replace(/\/$/, ''),
-    token: process.env.CHATGPT_INGESTOR_TOKEN || '',
-  },
-  'openclaw-ingestor': {
-    url: (process.env.OPENCLAW_INGESTOR_URL || '').replace(/\/$/, ''),
-    token: process.env.OPENCLAW_INGESTOR_TOKEN || '',
-  },
-  'whatsapp-ingestor': {
-    url: (process.env.WHATSAPP_INGESTOR_URL || '').replace(/\/$/, ''),
-    token: process.env.WHATSAPP_INGESTOR_TOKEN || '',
-  },
 };
 
 const app = express();
