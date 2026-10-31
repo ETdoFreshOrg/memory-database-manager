@@ -3,6 +3,8 @@ import { Routes, Route, NavLink, Navigate, useLocation } from 'react-router-dom'
 import LoginGate from './components/LoginGate';
 
 // Memory DB pages
+import Browse from './pages/Browse';
+import Gallery from './pages/Gallery';
 import Messages from './pages/Messages';
 import Cleanup from './pages/Cleanup';
 import Sources from './pages/Sources';
@@ -119,27 +121,37 @@ function buildServiceSection(svc: ServiceDef): SidebarSection {
   };
 }
 
-const sections: SidebarSection[] = [
-  {
-    key: 'memory-db', icon: '🗄️', label: 'Memory DB', serviceKey: 'memory-api',
-    items: [
-      { to: '/memory/messages',    icon: '✉️', label: 'Messages' },
-      { to: '/memory/cleanup',     icon: '🧹', label: 'Cleanup' },
-      { to: '/memory/sources',     icon: '📡', label: 'Sources' },
-      { to: '/memory/people',      icon: '👤', label: 'People' },
-      { to: '/memory/attachments', icon: '📎', label: 'Attachments' },
-      { to: '/memory/tokens',      icon: '🔑', label: 'Tokens' },
-      { to: '/memory/settings',    icon: '⚙️', label: 'Settings' },
-    ],
-  },
+/* The everyday pages sit at the top; admin tools and the older ingestor pages are tucked into menus below. */
+const MAIN_LINKS = [
+  { to: '/memory/browse',      icon: '🔎', label: 'Browse' },
+  { to: '/memory/attachments', icon: '📎', label: 'Attachments' },
+  { to: '/memory/sources',     icon: '📡', label: 'Sources' },
+  { to: '/memory/people',      icon: '👤', label: 'People' },
+];
+
+const ADMIN_SECTION: SidebarSection = {
+  key: 'memory-admin', icon: '🛠️', label: 'Admin', serviceKey: 'memory-api',
+  items: [
+    { to: '/memory/messages',          icon: '✉️', label: 'Messages table' },
+    { to: '/memory/attachments-table', icon: '📋', label: 'Attachments table' },
+    { to: '/memory/cleanup',           icon: '🧹', label: 'Cleanup' },
+    { to: '/memory/tokens',            icon: '🔑', label: 'Tokens' },
+    { to: '/memory/settings',          icon: '⚙️', label: 'Settings' },
+  ],
+};
+
+const INGESTOR_SECTIONS: SidebarSection[] = [
   ...SERVICES.map(buildServiceSection),
   IMESSAGE_SECTION,
 ];
 
+const sections: SidebarSection[] = [ADMIN_SECTION, ...INGESTOR_SECTIONS];
+const INGESTORS_KEY = 'ingestors';
+
 /* ── Collapsed state persistence ────────────────────────── */
 
 function loadCollapsed(): Record<string, boolean> {
-  const defaults: Record<string, boolean> = Object.fromEntries(sections.map(s => [s.key, true]));
+  const defaults: Record<string, boolean> = Object.fromEntries([...sections.map(s => [s.key, true]), [INGESTORS_KEY, true]]);
   try {
     const saved = JSON.parse(localStorage.getItem('sidebar-collapsed') || '{}');
     return { ...defaults, ...saved };
@@ -170,6 +182,7 @@ export default function App() {
   }, [serviceConfig]);
 
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
+  const wide = /^\/memory\/(browse|attachments)$/.test(location.pathname);
 
   const toggle = useCallback((key: string) => {
     setCollapsed(prev => {
@@ -188,6 +201,33 @@ export default function App() {
     return <span className={`status-dot ${ok ? 'green' : 'red'}`} title={ok ? 'Connected' : 'Unreachable'} />;
   };
 
+  const renderSection = (section: SidebarSection) => {
+    const svcDef = SERVICES.find(sv => sv.id === section.key);
+    return (
+      <div key={section.key} className="sidebar-section">
+        <button className="section-header" onClick={() => toggle(section.key)}>
+          <span className="section-icon">{section.icon}</span>
+          <span className="section-label">{section.label}</span>
+          {getStatusDot(section.serviceKey)}
+          <span className={`chevron ${collapsed[section.key] ? 'collapsed' : ''}`}>▾</span>
+        </button>
+        {!collapsed[section.key] && (
+          <div className="section-items">
+            {svcDef && svcDef.serviceKey && (
+              <ServiceStatus serviceKey={svcDef.serviceKey} serviceId={svcDef.id} />
+            )}
+            {section.items.map(item => (
+              <NavLink key={item.to} to={item.to} className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
+                <span>{item.icon}</span>
+                <span>{item.label}</span>
+              </NavLink>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <LoginGate>
     <div className="app-layout">
@@ -202,43 +242,39 @@ export default function App() {
           )}
         </div>
         <div className="sidebar-nav">
-          {sections.map(section => {
-            const svcDef = SERVICES.find(s => s.id === section.key);
-            return (
-              <div key={section.key} className="sidebar-section">
-                <button className="section-header" onClick={() => toggle(section.key)}>
-                  <span className="section-icon">{section.icon}</span>
-                  <span className="section-label">{section.label}</span>
-                  {getStatusDot(section.serviceKey)}
-                  <span className={`chevron ${collapsed[section.key] ? 'collapsed' : ''}`}>▾</span>
-                </button>
-                {!collapsed[section.key] && (
-                  <div className="section-items">
-                    {svcDef && svcDef.serviceKey && (
-                      <ServiceStatus serviceKey={svcDef.serviceKey} serviceId={svcDef.id} />
-                    )}
-                    {section.items.map(item => (
-                      <NavLink key={item.to} to={item.to} className={({ isActive }) => `sidebar-link ${isActive ? 'active' : ''}`}>
-                        <span>{item.icon}</span>
-                        <span>{item.label}</span>
-                      </NavLink>
-                    ))}
-                  </div>
-                )}
+          {MAIN_LINKS.map(item => (
+            <NavLink key={item.to} to={item.to} className={({ isActive }) => `sidebar-link main-link ${isActive ? 'active' : ''}`}>
+              <span>{item.icon}</span>
+              <span>{item.label}</span>
+            </NavLink>
+          ))}
+          <div className="sidebar-divider" />
+          {renderSection(ADMIN_SECTION)}
+          <div className="sidebar-section">
+            <button className="section-header" onClick={() => toggle(INGESTORS_KEY)}>
+              <span className="section-icon">🔌</span>
+              <span className="section-label">Ingestors</span>
+              <span className={`chevron ${collapsed[INGESTORS_KEY] ? 'collapsed' : ''}`}>▾</span>
+            </button>
+            {!collapsed[INGESTORS_KEY] && (
+              <div className="ingestor-group">
+                {INGESTOR_SECTIONS.map(renderSection)}
               </div>
-            );
-          })}
+            )}
+          </div>
         </div>
       </nav>
       {mobileOpen && <div className="sidebar-overlay" onClick={() => setMobileOpen(false)} />}
-      <main className="main-content">
+      <main className={`main-content ${wide ? 'wide' : ''}`}>
         <Routes>
           {/* ── Memory DB ─────────────────────────────────── */}
+          <Route path="/memory/browse" element={<Browse />} />
           <Route path="/memory/messages" element={<Messages />} />
           <Route path="/memory/cleanup" element={<Cleanup />} />
           <Route path="/memory/sources" element={<Sources />} />
           <Route path="/memory/people" element={<People />} />
-          <Route path="/memory/attachments" element={<Attachments />} />
+          <Route path="/memory/attachments" element={<Gallery />} />
+          <Route path="/memory/attachments-table" element={<Attachments />} />
           <Route path="/memory/tokens" element={<Tokens />} />
           <Route path="/memory/settings" element={<Settings />} />
 
@@ -335,7 +371,7 @@ export default function App() {
           <Route path="/imessage/conversations" element={<IMessageConversations />} />
 
           {/* ── Default ───────────────────────────────────── */}
-          <Route path="*" element={<Navigate to="/memory/messages" replace />} />
+          <Route path="*" element={<Navigate to="/memory/browse" replace />} />
         </Routes>
       </main>
     </div>
