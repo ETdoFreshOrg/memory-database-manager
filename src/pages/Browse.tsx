@@ -26,6 +26,17 @@ export default function Browse() {
 
   useEffect(() => {
     apiFetch('/api/sources').then(d => setSources(d.sources || [])).catch(() => {});
+    // Links from Sources and People arrive as ?source= / ?sender=; they replace the saved filters.
+    const source = params.get('source');
+    const sender = params.get('sender');
+    if (source !== null || sender !== null) {
+      setFilters({ ...DEFAULTS, source: source || '', sender: sender || '' });
+      setPage(1);
+      const next = new URLSearchParams(params);
+      next.delete('source'); next.delete('sender');
+      setParams(next, { replace: true });
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
